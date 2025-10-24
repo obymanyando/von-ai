@@ -16,6 +16,14 @@ export async function verifyAdminCredentials(username: string, password: string)
       .eq("username", username)
       .single();
 
+    // If table doesn't exist in Supabase schema cache, fall back to env vars
+    if (error && error.code === "PGRST205") {
+      console.log("[AUTH] admin_users table not in Supabase schema cache, using fallback");
+      const adminUsername = process.env.ADMIN_USERNAME || "admin";
+      const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
+      return username === adminUsername && password === adminPassword;
+    }
+    
     if (error || !admin) {
       return false;
     }

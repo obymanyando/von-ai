@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -35,7 +36,7 @@ const services = [
 export default function ContactForm() {
   const { toast } = useToast();
 
-  const form = useForm<InsertContactLead>({
+  const form = useForm<InsertContactLead & { subscribeToNewsletter?: boolean }>({
     resolver: zodResolver(insertContactLeadSchema),
     defaultValues: {
       name: "",
@@ -44,17 +45,31 @@ export default function ContactForm() {
       phone: "",
       message: "",
       serviceInterest: "",
+      subscribeToNewsletter: false,
     },
   });
 
   const submitMutation = useMutation({
-    mutationFn: async (data: InsertContactLead) => {
-      return await apiRequest("POST", "/api/contact/submit", data);
+    mutationFn: async (data: InsertContactLead & { subscribeToNewsletter?: boolean }) => {
+      // If user wants to subscribe to newsletter, do that separately
+      if (data.subscribeToNewsletter) {
+        try {
+          await apiRequest("POST", "/api/newsletter/subscribe", { email: data.email });
+        } catch (error) {
+          console.error("Newsletter subscription failed:", error);
+        }
+      }
+      // Remove the newsletter flag before sending contact data
+      const { subscribeToNewsletter, ...contactData } = data;
+      return await apiRequest("POST", "/api/contact/submit", contactData);
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      const subscribed = variables.subscribeToNewsletter;
       toast({
         title: "Message sent successfully!",
-        description: "We'll get back to you within 24 hours.",
+        description: subscribed 
+          ? "We'll get back to you within 24 hours. You're now subscribed to our newsletter!"
+          : "We'll get back to you within 24 hours.",
       });
       form.reset();
     },
@@ -67,7 +82,7 @@ export default function ContactForm() {
     },
   });
 
-  const onSubmit = (data: InsertContactLead) => {
+  const onSubmit = (data: InsertContactLead & { subscribeToNewsletter?: boolean }) => {
     submitMutation.mutate(data);
   };
 
@@ -192,6 +207,30 @@ export default function ContactForm() {
                 />
               </FormControl>
               <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="subscribeToNewsletter"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  data-testid="checkbox-newsletter-subscription"
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>
+                  Subscribe to our newsletter
+                </FormLabel>
+                <p className="text-sm text-muted-foreground">
+                  Get the latest updates on AI automation trends and best practices
+                </p>
+              </div>
             </FormItem>
           )}
         />

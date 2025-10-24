@@ -129,20 +129,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin login
   app.post("/api/admin/login", async (req, res) => {
     try {
+      console.log("[LOGIN] Received login request:", { username: req.body?.username });
       const result = loginSchema.safeParse(req.body);
 
       if (!result.success) {
+        console.log("[LOGIN] Validation failed:", result.error);
         const validationError = fromError(result.error);
         return res.status(400).json({ error: validationError.toString() });
       }
 
       const { username, password } = result.data;
+      console.log("[LOGIN] Credentials validated, checking with verifyAdminCredentials...");
       const isValid = await verifyAdminCredentials(username, password);
+      console.log("[LOGIN] verifyAdminCredentials returned:", isValid);
 
       if (!isValid) {
+        console.log("[LOGIN] Invalid credentials, returning 401");
         return res.status(401).json({ error: "Invalid credentials" });
       }
 
+      console.log("[LOGIN] Credentials valid, setting session");
       req.session!.isAdmin = true;
       res.json({ message: "Login successful" });
     } catch (error) {
