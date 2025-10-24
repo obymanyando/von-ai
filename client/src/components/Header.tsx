@@ -28,6 +28,11 @@ export default function Header() {
               Solutions
             </a>
           </Link>
+          <Link href="/case-studies">
+            <a className="text-sm font-medium text-foreground transition-colors hover:text-primary" data-testid="link-nav-case-studies">
+              Case Studies
+            </a>
+          </Link>
           <Link href="/blog">
             <a className="text-sm font-medium text-foreground transition-colors hover:text-primary" data-testid="link-nav-blog">
               Blog
@@ -82,6 +87,15 @@ export default function Header() {
                 data-testid="link-mobile-solutions"
               >
                 Solutions
+              </a>
+            </Link>
+            <Link href="/case-studies">
+              <a
+                className="block rounded-md px-3 py-2 text-base font-medium text-foreground hover:bg-accent"
+                onClick={() => setMobileMenuOpen(false)}
+                data-testid="link-mobile-case-studies"
+              >
+                Case Studies
               </a>
             </Link>
             <Link href="/blog">

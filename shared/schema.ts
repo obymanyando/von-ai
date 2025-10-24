@@ -55,6 +55,26 @@ export const testimonials = pgTable("testimonials", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+export const caseStudies = pgTable("case_studies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  company: text("company").notNull(),
+  industry: text("industry").notNull(),
+  solutionType: text("solution_type").notNull(),
+  problem: text("problem").notNull(),
+  solution: text("solution").notNull(),
+  results: text("results").notNull(),
+  timeToImplementation: text("time_to_implementation"),
+  costSavingsPercent: text("cost_savings_percent"),
+  efficiencyGainPercent: text("efficiency_gain_percent"),
+  revenueImpactPercent: text("revenue_impact_percent"),
+  featuredImageUrl: text("featured_image_url"),
+  publishedDate: timestamp("published_date", { withTimezone: true }),
+  status: text("status").notNull().default("draft"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).pick({
   email: true,
 }).extend({
@@ -106,3 +126,4 @@ export type InsertContactLead = z.infer<typeof insertContactLeadSchema>;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type Testimonial = typeof testimonials.$inferSelect;
+export type CaseStudy = typeof caseStudies.$inferSelect;

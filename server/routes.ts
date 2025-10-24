@@ -346,6 +346,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get case studies
+  app.get("/api/case-studies", async (req, res) => {
+    try {
+      if (!isSupabaseAvailable || !supabase) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      const { data, error } = await supabase
+        .from("case_studies")
+        .select("*")
+        .eq("status", "published")
+        .order("published_date", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching case studies:", error);
+        return res.status(500).json({ error: "Failed to fetch case studies" });
+      }
+
+      res.json(data || []);
+    } catch (error) {
+      console.error("Error in /api/case-studies:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Get individual case study by slug
+  app.get("/api/case-studies/:slug", async (req, res) => {
+    try {
+      if (!isSupabaseAvailable || !supabase) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      const { slug } = req.params;
+
+      const { data, error } = await supabase
+        .from("case_studies")
+        .select("*")
+        .eq("slug", slug)
+        .eq("status", "published")
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return res.status(404).json({ error: "Case study not found" });
+        }
+        console.error("Error fetching case study:", error);
+        return res.status(500).json({ error: "Failed to fetch case study" });
+      }
+
+      res.json(data);
+    } catch (error) {
+      console.error("Error in /api/case-studies/:slug:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Get testimonials
   app.get("/api/testimonials", async (req, res) => {
     try {
