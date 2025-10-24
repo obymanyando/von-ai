@@ -10,9 +10,11 @@ import BlogPost from "@/pages/BlogPost";
 import CaseStudies from "@/pages/CaseStudies";
 import CaseStudyDetail from "@/pages/CaseStudyDetail";
 import Contact from "@/pages/Contact";
+import Unsubscribe from "@/pages/Unsubscribe";
 import AdminLogin from "@/pages/admin/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import PostEditor from "@/pages/admin/PostEditor";
+import NewsletterComposer from "@/pages/admin/Newsletter";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -25,10 +27,12 @@ function Router() {
       <Route path="/case-studies" component={CaseStudies} />
       <Route path="/case-studies/:slug" component={CaseStudyDetail} />
       <Route path="/contact" component={Contact} />
+      <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/posts/new" component={PostEditor} />
       <Route path="/admin/posts/edit/:id" component={PostEditor} />
+      <Route path="/admin/newsletter" component={NewsletterComposer} />
       <Route component={NotFound} />
     </Switch>
   );

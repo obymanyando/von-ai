@@ -4,6 +4,8 @@ import { supabase, isSupabaseAvailable } from "./supabase";
 import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { verifyAdminCredentials, requireAuth } from "./auth";
+import { sendNewsletter, sendWelcomeEmail, isEmailServiceAvailable } from "./email";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all published blog posts
@@ -111,6 +113,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error inserting newsletter subscriber:", insertError);
         return res.status(500).json({ error: "Failed to subscribe" });
       }
+
+      // Send welcome email (async, don't wait)
+      sendWelcomeEmail(email).catch(err => 
+        console.error("Failed to send welcome email:", err)
+      );
 
       res.json({ message: "Successfully subscribed!" });
     } catch (error) {
@@ -318,6 +325,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(data || []);
     } catch (error) {
       console.error("Error in /api/admin/subscribers:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Send newsletter (admin only)
+  app.post("/api/admin/newsletter/send", requireAuth, async (req, res) => {
+    try {
+      if (!isSupabaseAvailable || !supabase) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      if (!isEmailServiceAvailable()) {
+        return res.status(503).json({ 
+          error: "Email service not configured. Please set RESEND_API_KEY environment variable." 
+        });
+      }
+
+      const newsletterSchema = z.object({
+        subject: z.string().min(1, "Subject is required"),
+        content: z.string().min(1, "Content is required"),
+      });
+
+      const result = newsletterSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({ error: validationError.toString() });
+      }
+
+      // Get active subscribers
+      const { data: subscribers, error: fetchError } = await supabase
+        .from("newsletter_subscribers")
+        .select("email")
+        .eq("status", "active");
+
+      if (fetchError) {
+        console.error("Error fetching subscribers:", fetchError);
+        return res.status(500).json({ error: "Failed to fetch subscribers" });
+      }
+
+      if (!subscribers || subscribers.length === 0) {
+        return res.status(400).json({ error: "No active subscribers found" });
+      }
+
+      const emails = subscribers.map(s => s.email);
+      
+      // Handle bounces by marking subscribers as bounced
+      const handleBounce = async (email: string, error: string) => {
+        try {
+          await supabase
+            .from("newsletter_subscribers")
+            .update({ status: "bounced" })
+            .eq("email", email);
+          console.log(`Marked ${email} as bounced: ${error}`);
+        } catch (err) {
+          console.error(`Failed to mark ${email} as bounced:`, err);
+        }
+      };
+      
+      const sendResult = await sendNewsletter(
+        emails,
+        {
+          subject: result.data.subject,
+          content: result.data.content,
+        },
+        handleBounce
+      );
+
+      res.json({
+        message: "Newsletter sent successfully",
+        ...sendResult,
+      });
+    } catch (error) {
+      console.error("Error in /api/admin/newsletter/send:", error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Internal server error" 
+      });
+    }
+  });
+
+  // Unsubscribe from newsletter
+  app.post("/api/newsletter/unsubscribe", async (req, res) => {
+    try {
+      if (!isSupabaseAvailable || !supabase) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      const { email } = req.body;
+
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      const { error } = await supabase
+        .from("newsletter_subscribers")
+        .update({ status: "unsubscribed" })
+        .eq("email", email);
+
+      if (error) {
+        console.error("Error unsubscribing:", error);
+        return res.status(500).json({ error: "Failed to unsubscribe" });
+      }
+
+      res.json({ message: "Successfully unsubscribed" });
+    } catch (error) {
+      console.error("Error in /api/newsletter/unsubscribe:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });

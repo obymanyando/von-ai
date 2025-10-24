@@ -192,7 +192,13 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="subscribers" className="space-y-4">
-            <h2 className="text-2xl font-bold">Newsletter Subscribers</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-bold">Newsletter Subscribers</h2>
+              <Button onClick={() => setLocation("/admin/newsletter")} data-testid="button-send-newsletter">
+                <Mail className="mr-2 h-4 w-4" />
+                Send Newsletter
+              </Button>
+            </div>
             <Card>
               <Table>
                 <TableHeader>
