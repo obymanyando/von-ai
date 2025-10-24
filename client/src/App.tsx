@@ -8,6 +8,9 @@ import Solutions from "@/pages/Solutions";
 import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
 import Contact from "@/pages/Contact";
+import AdminLogin from "@/pages/admin/Login";
+import AdminDashboard from "@/pages/admin/Dashboard";
+import PostEditor from "@/pages/admin/PostEditor";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +21,10 @@ function Router() {
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/contact" component={Contact} />
+      <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/posts/new" component={PostEditor} />
+      <Route path="/admin/posts/edit/:id" component={PostEditor} />
       <Route component={NotFound} />
     </Switch>
   );
