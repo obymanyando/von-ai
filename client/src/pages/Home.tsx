@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
+import { Testimonials, ClientLogos } from "@/components/Testimonials";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import Footer from "@/components/Footer";
 import { CheckCircle2, TrendingUp, Zap } from "lucide-react";
@@ -146,6 +147,8 @@ export default function Home() {
         </section>
       )}
 
+      <ClientLogos />
+      <Testimonials />
       <NewsletterSignup variant="section" />
       <Footer />
     </div>

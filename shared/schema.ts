@@ -43,6 +43,18 @@ export const adminUsers = pgTable("admin_users", {
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
+export const testimonials = pgTable("testimonials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(),
+  title: text("title").notNull(),
+  company: text("company").notNull(),
+  quote: text("quote").notNull(),
+  avatarUrl: text("avatar_url"),
+  companyLogoUrl: text("company_logo_url"),
+  featured: text("featured").notNull().default("false"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
 export const insertNewsletterSubscriberSchema = createInsertSchema(newsletterSubscribers).pick({
   email: true,
 }).extend({
@@ -93,3 +105,4 @@ export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscrib
 export type InsertContactLead = z.infer<typeof insertContactLeadSchema>;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
+export type Testimonial = typeof testimonials.$inferSelect;

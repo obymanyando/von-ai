@@ -346,6 +346,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get testimonials
+  app.get("/api/testimonials", async (req, res) => {
+    try {
+      if (!isSupabaseAvailable || !supabase) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      const { data, error } = await supabase
+        .from("testimonials")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching testimonials:", error);
+        return res.status(500).json({ error: "Failed to fetch testimonials" });
+      }
+
+      res.json(data || []);
+    } catch (error) {
+      console.error("Error in /api/testimonials:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Submit contact form
   app.post("/api/contact/submit", async (req, res) => {
     try {

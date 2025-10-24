@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { Testimonials } from "@/components/Testimonials";
 import { Bot, MessageSquare, Cpu, Users, ArrowRight, Check } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -221,6 +222,7 @@ export default function Solutions() {
         </div>
       </section>
 
+      <Testimonials />
       <Footer />
     </div>
   );
