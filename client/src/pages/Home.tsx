@@ -2,6 +2,7 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import Services from "@/components/Services";
 import { Testimonials, ClientLogos } from "@/components/Testimonials";
+import { ROICalculator } from "@/components/ROICalculator";
 import NewsletterSignup from "@/components/NewsletterSignup";
 import Footer from "@/components/Footer";
 import { CheckCircle2, TrendingUp, Zap } from "lucide-react";
@@ -149,6 +150,7 @@ export default function Home() {
 
       <ClientLogos />
       <Testimonials />
+      <ROICalculator variant="embedded" />
       <NewsletterSignup variant="section" />
       <Footer />
     </div>
