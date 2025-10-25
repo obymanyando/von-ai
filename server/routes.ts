@@ -337,11 +337,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all blog posts (admin only - includes drafts)
   app.get("/api/admin/posts", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("blog_posts")
         .select("*")
         .order("created_at", { ascending: false });
@@ -361,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create blog post
   app.post("/api/admin/posts", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
@@ -375,7 +375,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const postData = result.data;
       const publishedDate = postData.status === "published" ? new Date().toISOString() : null;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("blog_posts")
         .insert([
           {
@@ -407,7 +407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update blog post
   app.put("/api/admin/posts/:id", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
@@ -422,7 +422,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const postData = result.data;
       const publishedDate = postData.status === "published" ? new Date().toISOString() : null;
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("blog_posts")
         .update({
           title: postData.title,
@@ -454,13 +454,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Delete blog post
   app.delete("/api/admin/posts/:id", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
       const { id } = req.params;
 
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("blog_posts")
         .delete()
         .eq("id", id);
@@ -480,11 +480,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all newsletter subscribers (admin only)
   app.get("/api/admin/subscribers", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("newsletter_subscribers")
         .select("*")
         .order("subscribed_at", { ascending: false });
@@ -504,7 +504,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Send newsletter (admin only)
   app.post("/api/admin/newsletter/send", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
@@ -528,7 +528,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get active subscribers
-      const { data: subscribers, error: fetchError } = await supabase
+      const { data: subscribers, error: fetchError } = await supabaseAdmin
         .from("newsletter_subscribers")
         .select("email")
         .eq("status", "active");
@@ -546,8 +546,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Handle bounces by marking subscribers as bounced
       const handleBounce = async (email: string, error: string) => {
+        if (!supabaseAdmin) return;
         try {
-          await supabase
+          await supabaseAdmin
             .from("newsletter_subscribers")
             .update({ status: "bounced" })
             .eq("email", email);
@@ -611,11 +612,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all contact leads (admin only)
   app.get("/api/admin/leads", requireAuth, async (req, res) => {
     try {
-      if (!isSupabaseAvailable || !supabase) {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("contact_leads")
         .select("*")
         .order("submitted_at", { ascending: false});

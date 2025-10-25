@@ -82,8 +82,18 @@ Preferred communication style: Simple, everyday language.
 - `blog_posts`: Content management for blog articles with status workflow (draft/published)
 - `newsletter_subscribers`: Email list management with subscription status tracking
 - `contact_leads`: Lead capture form submissions with service interest categorization
+- `admin_users`: Admin authentication with bcrypt hashed passwords
+- `password_reset_tokens`: Hashed tokens for password reset functionality
+- `testimonials`: Customer testimonials with featured flag
+- `case_studies`: Portfolio items with metrics and solution details
 - All tables use UUID primary keys via `gen_random_uuid()`
 - Timestamp tracking for created/updated records
+
+**Important Database Notes**
+- Production uses Supabase with Row Level Security (RLS) enabled
+- Admin endpoints use `supabaseAdmin` client to bypass RLS
+- **CRITICAL**: Both `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` must be configured in deployment environment variables for admin features to work
+- Development database may differ from production - ensure schema is synced
 
 **Fallback Storage**
 - In-memory storage implementation (`MemStorage`) for user management when database is unavailable
@@ -92,20 +102,22 @@ Preferred communication style: Simple, everyday language.
 ### Authentication & Authorization
 
 **Current Implementation**
-- No authentication system currently implemented
-- Public access to all blog content and lead capture forms
-- Session infrastructure prepared (connect-pg-simple) but not actively used
-
-**Future Considerations**
-- Session-based authentication ready to be implemented with PostgreSQL session store
-- User schema defined in memory storage layer, prepared for database migration
+- Session-based authentication for admin panel using express-session with PostgreSQL store
+- Admin endpoints protected by `requireAuth` middleware
+- Password reset flow with email-based token verification
+- All public blog content and lead capture forms accessible without authentication
 
 ### External Dependencies
 
 **Third-Party Services**
-- **Supabase**: PostgreSQL database, authentication infrastructure (not yet utilized), and real-time capabilities
+- **Supabase**: PostgreSQL database with Row Level Security (RLS)
 - **Neon Database**: PostgreSQL serverless driver (@neondatabase/serverless) as database connection layer
-- Environment variables required: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `DATABASE_URL`
+- **Resend**: Transactional email service via Replit Connections (replaces manual API key management)
+- Environment variables required: 
+  - `SUPABASE_URL`: Supabase project URL
+  - `SUPABASE_ANON_KEY`: Public anon key (respects RLS)
+  - `SUPABASE_SERVICE_ROLE_KEY`: Admin service role key (bypasses RLS - **required for admin panel**)
+  - Resend credentials managed via Replit Connections
 
 **UI & Component Libraries**
 - **Radix UI**: Comprehensive set of unstyled, accessible component primitives
