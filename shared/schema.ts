@@ -117,6 +117,15 @@ export const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, "Current password is required"),
+  newPassword: z.string().min(8, "New password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your new password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
@@ -125,5 +134,6 @@ export type InsertNewsletterSubscriber = z.infer<typeof insertNewsletterSubscrib
 export type InsertContactLead = z.infer<typeof insertContactLeadSchema>;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
+export type ChangePassword = z.infer<typeof changePasswordSchema>;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type CaseStudy = typeof caseStudies.$inferSelect;

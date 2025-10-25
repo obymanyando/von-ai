@@ -1,9 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { supabase, isSupabaseAvailable } from "./supabase";
-import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema } from "@shared/schema";
+import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema, changePasswordSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
-import { verifyAdminCredentials, requireAuth } from "./auth";
+import { verifyAdminCredentials, requireAuth, changeAdminPassword } from "./auth";
 import { sendNewsletter, sendWelcomeEmail, isEmailServiceAvailable } from "./email";
 import { z } from "zod";
 
@@ -166,6 +166,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Check admin auth status
   app.get("/api/admin/auth", (req, res) => {
     res.json({ isAuthenticated: !!req.session?.isAdmin });
+  });
+
+  // Change admin password
+  app.post("/api/admin/change-password", requireAuth, async (req, res) => {
+    try {
+      const result = changePasswordSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({ error: validationError.toString() });
+      }
+
+      const { currentPassword, newPassword } = result.data;
+      
+      // For now, hardcoded to 'admin' user. Could be extended to support multiple admins
+      const username = "admin";
+      
+      const changeResult = await changeAdminPassword(username, currentPassword, newPassword);
+
+      if (!changeResult.success) {
+        return res.status(400).json({ error: changeResult.error });
+      }
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error("Error in /api/admin/change-password:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
   });
 
   // Get all blog posts (admin only - includes drafts)

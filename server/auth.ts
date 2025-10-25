@@ -52,6 +52,41 @@ export async function verifyAdminCredentials(username: string, password: string)
   }
 }
 
+export async function changeAdminPassword(username: string, currentPassword: string, newPassword: string): Promise<{ success: boolean; error?: string }> {
+  // First verify current password
+  const isValid = await verifyAdminCredentials(username, currentPassword);
+  if (!isValid) {
+    return { success: false, error: "Current password is incorrect" };
+  }
+
+  if (!isSupabaseAdminAvailable || !supabaseAdmin) {
+    return { success: false, error: "Password change not available in fallback mode" };
+  }
+
+  try {
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(newPassword, salt);
+
+    // Update password in database
+    const { error } = await supabaseAdmin
+      .from("admin_users")
+      .update({ password_hash: passwordHash })
+      .eq("username", username);
+
+    if (error) {
+      console.error("[AUTH] Error updating password:", error);
+      return { success: false, error: "Failed to update password" };
+    }
+
+    console.log("[AUTH] Password changed successfully for user:", username);
+    return { success: true };
+  } catch (error) {
+    console.error("[AUTH] Error changing password:", error);
+    return { success: false, error: "Internal error" };
+  }
+}
+
 export function requireAuth(req: any, res: any, next: any) {
   if (!req.session?.isAdmin) {
     return res.status(401).json({ error: "Unauthorized" });
