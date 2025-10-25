@@ -41,10 +41,9 @@ export async function verifyAdminCredentials(username: string, password: string)
       return false;
     }
 
-    console.log("[AUTH] Admin found, password_hash:", admin.password_hash.substring(0, 20) + "...");
-    console.log("[AUTH] Comparing password with bcrypt...");
+    console.log("[AUTH] Admin found, verifying password...");
     const result = await bcrypt.compare(password, admin.password_hash);
-    console.log("[AUTH] Bcrypt compare result:", result);
+    console.log("[AUTH] Password verification result:", result);
     return result;
   } catch (error) {
     console.error("[AUTH] Error verifying admin credentials:", error);
