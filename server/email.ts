@@ -104,6 +104,52 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
   }
 }
 
+export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {
+  if (!isEmailServiceAvailable() || !resend) {
+    console.warn("Email service not available, skipping password reset email");
+    return;
+  }
+
+  const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/admin/reset-password?token=${resetToken}`;
+
+  try {
+    await resend.emails.send({
+      from: "von AI <hello@vonai.com>",
+      to: email,
+      subject: "Reset Your Admin Password - von AI",
+      html: `
+        <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #000; margin-bottom: 20px;">Reset Your Password</h1>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 15px;">
+            You requested to reset your admin password. Click the button below to create a new password:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetUrl}" style="display: inline-block; background-color: #f97316; color: white; padding: 12px 32px; text-decoration: none; border-radius: 6px; font-weight: 600;">
+              Reset Password
+            </a>
+          </div>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 15px;">
+            Or copy and paste this link into your browser:
+          </p>
+          <p style="color: #999; font-size: 14px; word-break: break-all; background: #f5f5f5; padding: 10px; border-radius: 4px;">
+            ${resetUrl}
+          </p>
+          <p style="color: #666; line-height: 1.6; margin-top: 30px;">
+            This link will expire in 1 hour. If you didn't request this reset, you can safely ignore this email.
+          </p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="color: #999; font-size: 12px;">
+            This is an automated message from von AI admin system.
+          </p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.error("Failed to send password reset email:", error);
+    throw error;
+  }
+}
+
 function generateNewsletterHTML(content: string, subscriberEmail: string): string {
   const unsubscribeUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://yoursite.com"}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
   

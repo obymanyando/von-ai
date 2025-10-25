@@ -1,11 +1,12 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { supabase, isSupabaseAvailable } from "./supabase";
-import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema, changePasswordSchema } from "@shared/schema";
+import { supabase, isSupabaseAvailable, supabaseAdmin, isSupabaseAdminAvailable } from "./supabase";
+import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema, changePasswordSchema, requestPasswordResetSchema, resetPasswordSchema } from "@shared/schema";
 import { fromError } from "zod-validation-error";
 import { verifyAdminCredentials, requireAuth, changeAdminPassword } from "./auth";
-import { sendNewsletter, sendWelcomeEmail, isEmailServiceAvailable } from "./email";
+import { sendNewsletter, sendWelcomeEmail, isEmailServiceAvailable, sendPasswordResetEmail } from "./email";
 import { z } from "zod";
+import crypto from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get all published blog posts
@@ -192,6 +193,129 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ message: "Password changed successfully" });
     } catch (error) {
       console.error("Error in /api/admin/change-password:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Request password reset
+  app.post("/api/admin/request-password-reset", async (req, res) => {
+    try {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
+        return res.status(503).json({ error: "Service unavailable" });
+      }
+
+      const result = requestPasswordResetSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({ error: validationError.toString() });
+      }
+
+      const { username } = result.data;
+
+      // Check if user exists and get email
+      const { data: admin, error: adminError } = await supabaseAdmin
+        .from("admin_users")
+        .select("email")
+        .eq("username", username)
+        .single();
+
+      if (adminError || !admin || !admin.email) {
+        // Don't reveal if user exists for security
+        return res.json({ message: "If the username exists, a password reset email will be sent." });
+      }
+
+      // Generate secure random token
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+      // Store token in database
+      const { error: tokenError } = await supabaseAdmin
+        .from("password_reset_tokens")
+        .insert({
+          username,
+          token: resetToken,
+          expires_at: expiresAt.toISOString(),
+        });
+
+      if (tokenError) {
+        console.error("Error creating reset token:", tokenError);
+        return res.status(500).json({ error: "Failed to create reset token" });
+      }
+
+      // Send reset email
+      try {
+        await sendPasswordResetEmail(admin.email, resetToken);
+      } catch (emailError) {
+        console.error("Error sending reset email:", emailError);
+        // Still return success to user for security
+      }
+
+      res.json({ message: "If the username exists, a password reset email will be sent." });
+    } catch (error) {
+      console.error("Error in /api/admin/request-password-reset:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Reset password with token
+  app.post("/api/admin/reset-password", async (req, res) => {
+    try {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
+        return res.status(503).json({ error: "Service unavailable" });
+      }
+
+      const result = resetPasswordSchema.safeParse(req.body);
+
+      if (!result.success) {
+        const validationError = fromError(result.error);
+        return res.status(400).json({ error: validationError.toString() });
+      }
+
+      const { token, newPassword } = result.data;
+
+      // Validate token
+      const { data: resetToken, error: tokenError } = await supabaseAdmin
+        .from("password_reset_tokens")
+        .select("*")
+        .eq("token", token)
+        .eq("used", "false")
+        .single();
+
+      if (tokenError || !resetToken) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
+      }
+
+      // Check if token is expired
+      if (new Date(resetToken.expiresAt) < new Date()) {
+        return res.status(400).json({ error: "Reset token has expired" });
+      }
+
+      // Hash new password
+      const bcrypt = require("bcryptjs");
+      const salt = await bcrypt.genSalt(10);
+      const passwordHash = await bcrypt.hash(newPassword, salt);
+
+      // Update password
+      const { error: updateError } = await supabaseAdmin
+        .from("admin_users")
+        .update({ password_hash: passwordHash })
+        .eq("username", resetToken.username);
+
+      if (updateError) {
+        console.error("Error updating password:", updateError);
+        return res.status(500).json({ error: "Failed to reset password" });
+      }
+
+      // Mark token as used
+      await supabaseAdmin
+        .from("password_reset_tokens")
+        .update({ used: "true" })
+        .eq("token", token);
+
+      res.json({ message: "Password reset successfully" });
+    } catch (error) {
+      console.error("Error in /api/admin/reset-password:", error);
       res.status(500).json({ error: "Internal server error" });
     }
   });
