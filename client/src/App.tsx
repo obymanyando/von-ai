@@ -13,6 +13,8 @@ import Contact from "@/pages/Contact";
 import Unsubscribe from "@/pages/Unsubscribe";
 import AdminLogin from "@/pages/admin/Login";
 import AdminDashboard from "@/pages/admin/Dashboard";
+import ForgotPassword from "@/pages/admin/ForgotPassword";
+import ResetPasswordPage from "@/pages/admin/ResetPassword";
 import PostEditor from "@/pages/admin/PostEditor";
 import NewsletterComposer from "@/pages/admin/Newsletter";
 import NotFound from "@/pages/not-found";
@@ -29,6 +31,8 @@ function Router() {
       <Route path="/contact" component={Contact} />
       <Route path="/unsubscribe" component={Unsubscribe} />
       <Route path="/admin/login" component={AdminLogin} />
+      <Route path="/admin/forgot-password" component={ForgotPassword} />
+      <Route path="/admin/reset-password" component={ResetPasswordPage} />
       <Route path="/admin/dashboard" component={AdminDashboard} />
       <Route path="/admin/posts/new" component={PostEditor} />
       <Route path="/admin/posts/edit/:id" component={PostEditor} />

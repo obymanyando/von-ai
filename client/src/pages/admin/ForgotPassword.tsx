@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,45 +14,44 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { loginSchema, type LoginCredentials } from "@shared/schema";
+import { requestPasswordResetSchema, type RequestPasswordReset } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { Lock } from "lucide-react";
+import { Mail } from "lucide-react";
 import logoUrl from "@assets/9C49F293-828D-4E79-934A-9012AEAF827F_1761254425302.png";
 
-export default function AdminLogin() {
-  const [, setLocation] = useLocation();
+export default function ForgotPassword() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
 
-  const form = useForm<LoginCredentials>({
-    resolver: zodResolver(loginSchema),
+  const form = useForm<RequestPasswordReset>({
+    resolver: zodResolver(requestPasswordResetSchema),
     defaultValues: {
       username: "",
-      password: "",
     },
   });
 
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginCredentials) => {
-      return await apiRequest("POST", "/api/admin/login", credentials);
+  const resetMutation = useMutation({
+    mutationFn: async (data: RequestPasswordReset) => {
+      return await apiRequest("POST", "/api/admin/request-password-reset", data);
     },
     onSuccess: () => {
       toast({
-        title: "Login successful",
-        description: "Welcome to the admin panel",
+        title: "Password reset requested",
+        description: "If the username exists, a password reset email will be sent.",
       });
-      setLocation("/admin/dashboard");
+      form.reset();
     },
     onError: (error: Error) => {
       toast({
-        title: "Login failed",
-        description: error.message || "Invalid credentials",
+        title: "Request failed",
+        description: error.message || "Failed to request password reset",
         variant: "destructive",
       });
     },
   });
 
-  const onSubmit = (data: LoginCredentials) => {
-    loginMutation.mutate(data);
+  const onSubmit = (data: RequestPasswordReset) => {
+    resetMutation.mutate(data);
   };
 
   return (
@@ -64,11 +62,11 @@ export default function AdminLogin() {
             <img src={logoUrl} alt="von AI" className="h-10" />
           </div>
           <CardTitle className="flex items-center justify-center gap-2">
-            <Lock className="h-5 w-5" />
-            Admin Login
+            <Mail className="h-5 w-5" />
+            Forgot Password
           </CardTitle>
           <CardDescription>
-            Sign in to access the admin panel
+            Enter your username and we'll send you a password reset link
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -84,26 +82,7 @@ export default function AdminLogin() {
                       <Input
                         placeholder="admin"
                         {...field}
-                        data-testid="input-admin-username"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Password</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                        data-testid="input-admin-password"
+                        data-testid="input-forgot-username"
                       />
                     </FormControl>
                     <FormMessage />
@@ -114,16 +93,16 @@ export default function AdminLogin() {
               <Button
                 type="submit"
                 className="w-full"
-                disabled={loginMutation.isPending}
-                data-testid="button-admin-login"
+                disabled={resetMutation.isPending}
+                data-testid="button-request-reset"
               >
-                {loginMutation.isPending ? "Logging in..." : "Login"}
+                {resetMutation.isPending ? "Sending..." : "Send Reset Link"}
               </Button>
 
               <div className="text-center">
-                <Link href="/admin/forgot-password">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-forgot-password">
-                    Forgot your password?
+                <Link href="/admin/login">
+                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-back-to-login">
+                    Back to login
                   </a>
                 </Link>
               </div>
