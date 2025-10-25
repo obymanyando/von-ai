@@ -2,8 +2,11 @@
 
 A modern, conversion-optimized marketing website and lead generation platform for an AI automation consultancy. Built with React, TypeScript, Express, and Supabase.
 
-![von AI](https://img.shields.io/badge/Status-Production%20Ready-success)
+🌐 **Live at:** [https://von-ai.com](https://von-ai.com)
+
+![von AI](https://img.shields.io/badge/Status-Live%20in%20Production-success)
 ![TypeScript](https://img.shields.io/badge/TypeScript-97%25-blue)
+![Deployment](https://img.shields.io/badge/Deployment-Replit%20Autoscale-blue)
 
 ## 🚀 Features
 
@@ -54,7 +57,7 @@ A modern, conversion-optimized marketing website and lead generation platform fo
 - Supabase/PostgreSQL
 
 **Email:**
-- Resend API
+- Resend (via Replit native integration)
 
 **Development:**
 - Vite (build tool)
@@ -66,7 +69,8 @@ A modern, conversion-optimized marketing website and lead generation platform fo
 
 - Node.js 18+ 
 - PostgreSQL database (or Supabase account)
-- Resend API key (for email functionality)
+- Resend account (for email functionality)
+- Replit account (recommended for deployment)
 
 ### Setup Steps
 
@@ -93,13 +97,15 @@ A modern, conversion-optimized marketing website and lead generation platform fo
    # Session
    SESSION_SECRET=your_random_session_secret
 
-   # Email (Resend)
-   RESEND_API_KEY=your_resend_api_key
-
    # Admin Credentials (Fallback)
    ADMIN_USERNAME=admin
    ADMIN_PASSWORD_HASH=your_bcrypt_hash
+
+   # Production
+   NODE_ENV=production
    ```
+
+   **Note:** When deploying on Replit, use the native Resend integration instead of manually setting `RESEND_API_KEY`. See the Email Configuration section below.
 
 4. **Set up the database**
    ```bash
@@ -138,12 +144,21 @@ The application uses the following tables:
 
 ## 📧 Email Configuration
 
-The platform uses [Resend](https://resend.com) for transactional emails:
+The platform uses [Resend](https://resend.com) for transactional emails.
 
-1. Sign up for a Resend account
+### Using Replit (Recommended)
+
+1. Sign up for a Resend account at [resend.com](https://resend.com)
 2. Verify your sending domain
-3. Generate an API key
-4. Add to `.env` as `RESEND_API_KEY`
+3. In your Replit workspace, search for "Resend" in the integrations panel
+4. Connect your Resend account via the native integration
+5. The integration automatically handles API key management and authentication
+
+### Manual Setup (Non-Replit)
+
+1. Generate a Resend API key
+2. Add to `.env` as `RESEND_API_KEY`
+3. Configure the Resend client manually in `server/email.ts`
 
 **Email Features:**
 - Welcome emails on newsletter subscription
@@ -182,40 +197,85 @@ von-ai/
 
 ## 🚀 Deployment
 
-### Using Replit (Recommended)
+### Production Deployment (Replit)
 
-1. Import this repository into Replit
-2. Configure Secrets for environment variables
-3. Click "Publish" to deploy
+**Current Status:** ✅ Successfully deployed at [von-ai.com](https://von-ai.com)
 
-### Manual Deployment
+The application is deployed on **Replit Autoscale** with the following configuration:
+
+**Deployment Settings:**
+- **Type:** Autoscale (optimal for Node.js/Express apps)
+- **Custom Domain:** von-ai.com
+- **HTTPS:** Automatic SSL certificates (free, auto-renewing)
+- **Port:** 5000 (mapped to external port 80/443)
+
+**Environment Variables (Production):**
+Set these in your Replit Deployment Secrets:
+- `SESSION_SECRET` - Random session key
+- `SUPABASE_URL` - Your Supabase project URL
+- `SUPABASE_ANON_KEY` - Your Supabase anon key
+- `DATABASE_URL` - PostgreSQL connection string
+- `NODE_ENV` - Set to `production`
+
+**Note:** `RESEND_API_KEY` is handled automatically via the Replit Resend integration.
+
+### Deploying to Replit (First Time)
+
+1. Fork or import this repository into Replit
+2. Install dependencies: `npm install`
+3. Set up the Resend integration via the Tools panel
+4. Configure environment secrets (listed above)
+5. Run `npm run db:push` to sync database schema
+6. Click **"Publish"** button
+7. Select **Autoscale** deployment type
+8. Configure custom domain (optional)
+9. Wait for build to complete
+
+### Custom Domain Setup
+
+1. After publishing, go to **Deployments → Settings → Domains**
+2. Click **"Link a domain"** or **"Manually connect"**
+3. Add your domain (e.g., `von-ai.com`)
+4. Copy the provided A and TXT DNS records
+5. Add these records to your domain registrar's DNS settings
+6. Wait for DNS propagation (can take up to 48 hours)
+7. HTTPS certificates are automatically provisioned once verified
+
+### Manual Deployment (Non-Replit)
 
 1. Build the application:
    ```bash
    npm run build
    ```
 
-2. Set environment variables on your hosting platform
+2. Set all environment variables on your hosting platform
 
 3. Start the production server:
    ```bash
    npm start
    ```
 
+The build process creates:
+- `dist/public/` - Frontend static files
+- `dist/index.js` - Bundled backend server
+
 ## 🧪 Available Scripts
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run db:push` - Sync database schema
-- `npm run db:studio` - Open Drizzle Studio
+- `npm run dev` - Start development server (port 5000)
+- `npm run build` - Build frontend and backend for production
+- `npm run start` - Start production server
+- `npm run check` - Run TypeScript type checking
+- `npm run db:push` - Sync database schema with Drizzle
 
 ## 🔒 Security Notes
 
-- Session cookies are HTTP-only and secure in production
-- CORS is configured for your domain
-- API keys and secrets must never be committed
-- Admin passwords are bcrypt hashed
-- Use environment variables for all sensitive data
+- Session cookies are HTTP-only and secure in production (`secure: true` when `NODE_ENV=production`)
+- HTTPS/SSL certificates automatically provided by Replit (free, auto-renewing)
+- API keys and secrets managed via Replit integrations and secrets
+- Admin passwords are bcrypt hashed in the database
+- CORS is configured appropriately for production
+- All sensitive data uses environment variables
+- Database connections use SSL in production
 
 ## 📝 License
 
@@ -225,6 +285,52 @@ This project is proprietary software for von AI.
 
 This is a private repository. For questions or support, contact the development team.
 
+## 📊 Sample Data
+
+The production database includes sample data for testing:
+
+**Testimonials (4):**
+- TechFlow Solutions
+- Global Manufacturing Co.
+- CloudScale Inc.
+- ShopEase Retail
+
+**Case Studies (4):**
+- Sales automation case study
+- Customer service chatbot case study
+- Operations copilot case study
+- Industry-specific implementations
+
+## 🐛 Troubleshooting
+
+**Common Issues:**
+
+1. **Database connection errors**
+   - Verify `DATABASE_URL`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` are set
+   - Run `npm run db:push` to sync schema
+
+2. **Email not sending**
+   - Ensure Resend integration is connected (Replit)
+   - Verify sending domain is verified in Resend dashboard
+   - Check `RESEND_API_KEY` is set (non-Replit deployments)
+
+3. **Admin login not working**
+   - Default credentials: `admin` / `admin123`
+   - Check `admin_users` table has entries
+   - Verify `SESSION_SECRET` is set
+
+4. **Build failures**
+   - Run `npm install` to ensure all dependencies are installed
+   - Check for TypeScript errors: `npm run check`
+   - Verify Node.js version is 18+
+
+5. **HTTPS/SSL not working**
+   - Wait for DNS propagation (up to 48 hours)
+   - Verify domain shows "Verified" status in Replit
+   - Check DNS A records point to correct IP
+
 ---
 
 **Built with ❤️ using Replit Agent**
+
+**Repository:** [github.com/obymanyando/von-ai](https://github.com/obymanyando/von-ai)
