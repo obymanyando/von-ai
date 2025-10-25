@@ -1,0 +1,55 @@
+-- Create blog_posts table
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  content TEXT NOT NULL,
+  excerpt TEXT,
+  author TEXT NOT NULL DEFAULT 'von AI Team',
+  published_date TIMESTAMPTZ,
+  featured_image_url TEXT,
+  status TEXT NOT NULL DEFAULT 'draft',
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create newsletter_subscribers table
+CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email TEXT NOT NULL UNIQUE,
+  subscribed_at TIMESTAMPTZ DEFAULT NOW(),
+  status TEXT NOT NULL DEFAULT 'active'
+);
+
+-- Create contact_leads table
+CREATE TABLE IF NOT EXISTS contact_leads (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  company TEXT,
+  phone TEXT,
+  message TEXT NOT NULL,
+  service_interest TEXT,
+  submitted_at TIMESTAMPTZ DEFAULT NOW(),
+  status TEXT NOT NULL DEFAULT 'new'
+);
+
+-- Create indexes for better query performance
+CREATE INDEX IF NOT EXISTS idx_blog_posts_status ON blog_posts(status);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_published_date ON blog_posts(published_date DESC);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts(slug);
+CREATE INDEX IF NOT EXISTS idx_newsletter_email ON newsletter_subscribers(email);
+CREATE INDEX IF NOT EXISTS idx_contact_leads_status ON contact_leads(status);
+CREATE INDEX IF NOT EXISTS idx_contact_leads_submitted ON contact_leads(submitted_at DESC);
+
+-- Optional: Insert sample blog post for testing
+INSERT INTO blog_posts (title, slug, content, excerpt, author, published_date, status)
+VALUES (
+  'The Future of AI Automation in Business',
+  'future-of-ai-automation',
+  '<h2>Introduction</h2><p>AI automation is transforming how businesses operate across sales, service, and operations. From intelligent lead generation to 24/7 customer support, AI agents are becoming an essential part of modern business infrastructure.</p><h2>Key Benefits</h2><p>Organizations implementing AI automation are seeing remarkable results: 3x faster response times, 40% cost reduction, and 24/7 availability. These improvements translate directly to better customer experiences and increased revenue.</p><h2>Getting Started</h2><p>The key to successful AI automation is starting with clear use cases. Whether it''s lead qualification, customer support, or operational efficiency, identifying specific pain points helps ensure your AI implementation delivers measurable value.</p>',
+  'Discover how AI automation is revolutionizing business operations and driving measurable results across sales, service, and operations.',
+  'von AI Team',
+  NOW(),
+  'published'
+);
