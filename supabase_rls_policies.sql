@@ -81,13 +81,13 @@ COMMENT ON TABLE testimonials IS 'RLS enabled - Public read access, backend writ
 -- Run these queries to verify RLS is properly configured
 
 -- Check which tables have RLS enabled
--- SELECT 
---   schemaname, 
---   tablename, 
---   rowsecurity 
--- FROM pg_tables 
--- WHERE schemaname = 'public' 
--- ORDER BY tablename;
+SELECT 
+  schemaname, 
+  tablename, 
+  rowsecurity 
+FROM pg_tables 
+ WHERE schemaname = 'public' 
+ ORDER BY tablename;
 
 -- View all RLS policies
 -- SELECT 
