@@ -229,12 +229,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const resetToken = crypto.randomBytes(32).toString('hex');
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
-      // Store token in database
+      // Hash the token before storing
+      const bcrypt = require("bcryptjs");
+      const salt = await bcrypt.genSalt(10);
+      const tokenHash = await bcrypt.hash(resetToken, salt);
+
+      // Store hashed token in database
       const { error: tokenError } = await supabaseAdmin
         .from("password_reset_tokens")
         .insert({
           username,
-          token: resetToken,
+          token: tokenHash,
           expires_at: expiresAt.toISOString(),
         });
 
@@ -243,7 +248,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ error: "Failed to create reset token" });
       }
 
-      // Send reset email
+      // Send reset email with the plaintext token (user will use this)
       try {
         await sendPasswordResetEmail(admin.email, resetToken);
       } catch (emailError) {
@@ -274,25 +279,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const { token, newPassword } = result.data;
 
-      // Validate token
-      const { data: resetToken, error: tokenError } = await supabaseAdmin
+      // Get all unused, non-expired tokens for comparison
+      const { data: resetTokens, error: tokenError } = await supabaseAdmin
         .from("password_reset_tokens")
         .select("*")
-        .eq("token", token)
         .eq("used", "false")
-        .single();
+        .gt("expires_at", new Date().toISOString());
 
-      if (tokenError || !resetToken) {
+      if (tokenError || !resetTokens || resetTokens.length === 0) {
         return res.status(400).json({ error: "Invalid or expired reset token" });
       }
 
-      // Check if token is expired
-      if (new Date(resetToken.expiresAt) < new Date()) {
-        return res.status(400).json({ error: "Reset token has expired" });
+      // Find the matching token by comparing hashes
+      const bcrypt = require("bcryptjs");
+      let matchedToken = null;
+
+      for (const dbToken of resetTokens) {
+        const isMatch = await bcrypt.compare(token, dbToken.token);
+        if (isMatch) {
+          matchedToken = dbToken;
+          break;
+        }
+      }
+
+      if (!matchedToken) {
+        return res.status(400).json({ error: "Invalid or expired reset token" });
       }
 
       // Hash new password
-      const bcrypt = require("bcryptjs");
       const salt = await bcrypt.genSalt(10);
       const passwordHash = await bcrypt.hash(newPassword, salt);
 
@@ -300,7 +314,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { error: updateError } = await supabaseAdmin
         .from("admin_users")
         .update({ password_hash: passwordHash })
-        .eq("username", resetToken.username);
+        .eq("username", matchedToken.username);
 
       if (updateError) {
         console.error("Error updating password:", updateError);
@@ -311,7 +325,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await supabaseAdmin
         .from("password_reset_tokens")
         .update({ used: "true" })
-        .eq("token", token);
+        .eq("id", matchedToken.id);
 
       res.json({ message: "Password reset successfully" });
     } catch (error) {

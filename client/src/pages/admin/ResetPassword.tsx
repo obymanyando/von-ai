@@ -17,7 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { resetPasswordSchema, type ResetPassword } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { Lock } from "lucide-react";
-import logoUrl from "@/assets/9C49F293-828D-4E79-934A-9012AEAF827F_1761254425302.png";
+import logoUrl from "@assets/9C49F293-828D-4E79-934A-9012AEAF827F_1761254425302.png";
 
 export default function ResetPasswordPage() {
   const { toast } = useToast();
@@ -71,10 +71,8 @@ export default function ResetPasswordPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
-            <Link href="/admin/forgot-password">
-              <a className="text-sm text-muted-foreground hover:text-primary transition-colors">
-                Request a new password reset
-              </a>
+            <Link href="/admin/forgot-password" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              Request a new password reset
             </Link>
           </CardContent>
         </Card>
@@ -151,10 +149,8 @@ export default function ResetPasswordPage() {
               </Button>
 
               <div className="text-center">
-                <Link href="/admin/login">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-back-to-login-from-reset">
-                    Back to login
-                  </a>
+                <Link href="/admin/login" className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-back-to-login-from-reset">
+                  Back to login
                 </Link>
               </div>
             </form>

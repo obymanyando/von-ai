@@ -121,10 +121,8 @@ export default function AdminLogin() {
               </Button>
 
               <div className="text-center">
-                <Link href="/admin/forgot-password">
-                  <a className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-forgot-password">
-                    Forgot your password?
-                  </a>
+                <Link href="/admin/forgot-password" className="text-sm text-muted-foreground hover:text-primary transition-colors" data-testid="link-forgot-password">
+                  Forgot your password?
                 </Link>
               </div>
             </form>
