@@ -1,13 +1,13 @@
 import bcrypt from "bcryptjs";
-import { supabase, isSupabaseAvailable } from "./supabase";
+import { supabaseAdmin, isSupabaseAdminAvailable } from "./supabase";
 
 export async function verifyAdminCredentials(username: string, password: string): Promise<boolean> {
   console.log("[AUTH] Starting credential verification for username:", username);
-  console.log("[AUTH] Supabase available:", isSupabaseAvailable);
+  console.log("[AUTH] Supabase admin available:", isSupabaseAdminAvailable);
   
-  if (!isSupabaseAvailable || !supabase) {
+  if (!isSupabaseAdminAvailable || !supabaseAdmin) {
     // Fallback for development - check against environment variable
-    console.log("[AUTH] Supabase not available, using fallback env vars");
+    console.log("[AUTH] Supabase admin client not available, using fallback env vars");
     const adminUsername = process.env.ADMIN_USERNAME || "admin";
     const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
     return username === adminUsername && password === adminPassword;
@@ -15,7 +15,7 @@ export async function verifyAdminCredentials(username: string, password: string)
 
   try {
     console.log("[AUTH] Querying admin_users table for username:", username);
-    const { data: admin, error } = await supabase
+    const { data: admin, error } = await supabaseAdmin
       .from("admin_users")
       .select("password_hash")
       .eq("username", username)
