@@ -40,6 +40,16 @@ export const adminUsers = pgTable("admin_users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
+  email: text("email"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
+
+export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: text("username").notNull(),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  used: text("used").notNull().default("false"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
@@ -126,6 +136,19 @@ export const changePasswordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+export const requestPasswordResetSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(8, "Password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
 export type BlogPost = typeof blogPosts.$inferSelect;
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type NewsletterSubscriber = typeof newsletterSubscribers.$inferSelect;
@@ -135,5 +158,8 @@ export type InsertContactLead = z.infer<typeof insertContactLeadSchema>;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type LoginCredentials = z.infer<typeof loginSchema>;
 export type ChangePassword = z.infer<typeof changePasswordSchema>;
+export type RequestPasswordReset = z.infer<typeof requestPasswordResetSchema>;
+export type ResetPassword = z.infer<typeof resetPasswordSchema>;
+export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type Testimonial = typeof testimonials.$inferSelect;
 export type CaseStudy = typeof caseStudies.$inferSelect;
