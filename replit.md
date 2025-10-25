@@ -12,8 +12,16 @@ All Phase 2 features have been implemented and tested:
 3. **Case Studies/Portfolio** - Filterable case studies page with individual detail pages and metrics visualization
 4. **ROI Calculator** - Interactive calculator embedded on homepage and solutions page with results display
 5. **Newsletter Email Integration** - Resend API integration, welcome emails, newsletter composer with live HTML preview, bounce handling, and unsubscribe functionality
+6. **Admin Password Management** - Password change functionality in admin dashboard and "Forgot Password" flow with email-based password reset
 
 Admin credentials: `admin` / `admin123` (session-based auth with fallback to environment variables)
+
+### Password Reset Security
+- Password reset tokens are hashed using bcrypt before storage in database
+- Tokens expire in 1 hour
+- Email-based password reset flow via Resend API
+- Generic error messages prevent username enumeration
+- Tokens are single-use and marked as consumed after successful reset
 
 ## User Preferences
 
