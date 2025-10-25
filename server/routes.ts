@@ -508,9 +508,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(503).json({ error: "Database service unavailable" });
       }
 
-      if (!isEmailServiceAvailable()) {
+      const emailAvailable = await isEmailServiceAvailable();
+      if (!emailAvailable) {
         return res.status(503).json({ 
-          error: "Email service not configured. Please set RESEND_API_KEY environment variable." 
+          error: "Email service not configured. Please set up the Resend connection." 
         });
       }
 

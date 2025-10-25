@@ -1,9 +1,56 @@
 import { Resend } from "resend";
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+let connectionSettings: any;
 
-export const isEmailServiceAvailable = (): boolean => {
-  return !!resend && !!process.env.RESEND_API_KEY;
+async function getCredentials() {
+  const hostname = process.env.REPLIT_CONNECTORS_HOSTNAME;
+  const xReplitToken = process.env.REPL_IDENTITY
+    ? 'repl ' + process.env.REPL_IDENTITY
+    : process.env.WEB_REPL_RENEWAL
+    ? 'depl ' + process.env.WEB_REPL_RENEWAL
+    : null;
+
+  if (!xReplitToken) {
+    throw new Error('X_REPLIT_TOKEN not found for repl/depl');
+  }
+
+  connectionSettings = await fetch(
+    'https://' + hostname + '/api/v2/connection?include_secrets=true&connector_names=resend',
+    {
+      headers: {
+        'Accept': 'application/json',
+        'X_REPLIT_TOKEN': xReplitToken
+      }
+    }
+  ).then(res => res.json()).then(data => data.items?.[0]);
+
+  if (!connectionSettings || (!connectionSettings.settings.api_key)) {
+    throw new Error('Resend not connected');
+  }
+  return {
+    apiKey: connectionSettings.settings.api_key,
+    fromEmail: connectionSettings.settings.from_email
+  };
+}
+
+// WARNING: Never cache this client.
+// Access tokens expire, so a new client must be created each time.
+// Always call this function again to get a fresh client.
+async function getUncachableResendClient() {
+  const credentials = await getCredentials();
+  return {
+    client: new Resend(credentials.apiKey),
+    fromEmail: credentials.fromEmail || "hello@vonai.com"
+  };
+}
+
+export const isEmailServiceAvailable = async (): Promise<boolean> => {
+  try {
+    await getCredentials();
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export interface NewsletterEmail {
@@ -18,11 +65,18 @@ export async function sendNewsletter(
   newsletter: NewsletterEmail,
   onBounce?: (email: string, error: string) => Promise<void>
 ): Promise<{ success: boolean; sent: number; failed: number; errors: string[]; bounced: string[] }> {
-  if (!isEmailServiceAvailable() || !resend) {
-    throw new Error("Email service is not configured. Please set RESEND_API_KEY environment variable.");
+  let resendClient;
+  let fromEmailDefault;
+  
+  try {
+    const { client, fromEmail } = await getUncachableResendClient();
+    resendClient = client;
+    fromEmailDefault = fromEmail;
+  } catch (error) {
+    throw new Error("Email service is not configured. Please set up the Resend connection.");
   }
 
-  const fromEmail = newsletter.fromEmail || "hello@vonai.com";
+  const fromEmail = newsletter.fromEmail || fromEmailDefault;
   const fromName = newsletter.fromName || "von AI";
   const from = `${fromName} <${fromEmail}>`;
 
@@ -38,7 +92,7 @@ export async function sendNewsletter(
     
     const promises = batch.map(async (email) => {
       try {
-        await resend.emails.send({
+        await resendClient.emails.send({
           from,
           to: email,
           subject: newsletter.subject,
@@ -72,14 +126,11 @@ export async function sendNewsletter(
 }
 
 export async function sendWelcomeEmail(email: string): Promise<void> {
-  if (!isEmailServiceAvailable() || !resend) {
-    console.warn("Email service not available, skipping welcome email");
-    return;
-  }
-
   try {
-    await resend.emails.send({
-      from: "von AI <hello@vonai.com>",
+    const { client, fromEmail } = await getUncachableResendClient();
+    
+    await client.emails.send({
+      from: `von AI <${fromEmail}>`,
       to: email,
       subject: "Welcome to von AI Newsletter",
       html: `
@@ -94,27 +145,23 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">
-            If you'd like to unsubscribe, <a href="${process.env.REPLIT_DEV_DOMAIN || "https://yoursite.com"}/unsubscribe?email=${encodeURIComponent(email)}" style="color: #999;">click here</a>.
+            If you'd like to unsubscribe, <a href="${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/unsubscribe?email=${encodeURIComponent(email)}" style="color: #999;">click here</a>.
           </p>
         </div>
       `,
     });
   } catch (error) {
-    console.error("Failed to send welcome email:", error);
+    console.warn("Email service not available, skipping welcome email:", error);
   }
 }
 
 export async function sendPasswordResetEmail(email: string, resetToken: string): Promise<void> {
-  if (!isEmailServiceAvailable() || !resend) {
-    console.warn("Email service not available, skipping password reset email");
-    return;
-  }
-
-  const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/admin/reset-password?token=${resetToken}`;
-
   try {
-    await resend.emails.send({
-      from: "von AI <hello@vonai.com>",
+    const { client, fromEmail } = await getUncachableResendClient();
+    const resetUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/admin/reset-password?token=${resetToken}`;
+
+    await client.emails.send({
+      from: `von AI <${fromEmail}>`,
       to: email,
       subject: "Reset Your Admin Password - von AI",
       html: `
@@ -151,7 +198,7 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
 }
 
 function generateNewsletterHTML(content: string, subscriberEmail: string): string {
-  const unsubscribeUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://yoursite.com"}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
+  const unsubscribeUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
   
   return `
     <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
