@@ -1,14 +1,77 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { supabase, isSupabaseAvailable, supabaseAdmin, isSupabaseAdminAvailable } from "./supabase";
-import { insertNewsletterSubscriberSchema, insertContactLeadSchema, loginSchema, insertBlogPostSchema, changePasswordSchema, requestPasswordResetSchema, resetPasswordSchema } from "@shared/schema";
+import {
+  supabase,
+  isSupabaseAvailable,
+  supabaseAdmin,
+  isSupabaseAdminAvailable,
+} from "./supabase";
+import {
+  insertNewsletterSubscriberSchema,
+  insertContactLeadSchema,
+  loginSchema,
+  insertBlogPostSchema,
+  changePasswordSchema,
+  requestPasswordResetSchema,
+  resetPasswordSchema,
+} from "@shared/schema";
 import { fromError } from "zod-validation-error";
-import { verifyAdminCredentials, requireAuth, changeAdminPassword } from "./auth";
-import { sendNewsletter, sendWelcomeEmail, isEmailServiceAvailable, sendPasswordResetEmail } from "./email";
+import {
+  verifyAdminCredentials,
+  requireAuth,
+  changeAdminPassword,
+} from "./auth";
+import {
+  sendNewsletter,
+  sendWelcomeEmail,
+  isEmailServiceAvailable,
+  sendPasswordResetEmail,
+} from "./email";
 import { z } from "zod";
 import crypto from "crypto";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // --- Admin stats (counts for dashboard)
+  app.get("/api/admin/stats", requireAuth, async (_req, res) => {
+    try {
+      if (!isSupabaseAdminAvailable || !supabaseAdmin) {
+        return res.status(503).json({ error: "Database service unavailable" });
+      }
+
+      const [{ data: posts }, { data: subs }, { data: leads }] =
+        await Promise.all([
+          supabaseAdmin.from("blog_posts").select("id, status, published_date"),
+          supabaseAdmin.from("newsletter_subscribers").select("id"),
+          supabaseAdmin.from("contact_leads").select("id"),
+        ]);
+
+      const blogTotal = posts?.length ?? 0;
+      const blogPublished =
+        posts?.filter(
+          (p) =>
+            p.status === "published" &&
+            p.published_date &&
+            new Date(p.published_date) <= new Date(),
+        ).length ?? 0;
+
+      res.json({
+        blogPosts: { total: blogTotal, published: blogPublished },
+        subscribers: { total: subs?.length ?? 0 },
+        contactLeads: { total: leads?.length ?? 0 },
+      });
+    } catch (e: any) {
+      console.error("Error in /api/admin/stats:", e);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // --- Alias expected by frontend: /api/admin/blog-posts -> your existing /api/admin/posts
+  app.get("/api/admin/blog-posts", requireAuth, async (req, res, next) => {
+    // Delegate to the existing handler for /api/admin/posts
+    (app as any)._router.handle({ ...req, url: "/api/admin/posts" }, res, next);
+  });
+  // End of alias
+
   // Get all published blog posts
   app.get("/api/blog/posts", async (req, res) => {
     try {
@@ -39,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isSupabaseAvailable || !supabase) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
-      
+
       const { slug } = req.params;
 
       const { data, error } = await supabase
@@ -70,7 +133,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isSupabaseAvailable || !supabase) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
-      
+
       const result = insertNewsletterSubscriberSchema.safeParse(req.body);
 
       if (!result.success) {
@@ -116,8 +179,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Send welcome email (async, don't wait)
-      sendWelcomeEmail(email).catch(err => 
-        console.error("Failed to send welcome email:", err)
+      sendWelcomeEmail(email).catch((err) =>
+        console.error("Failed to send welcome email:", err),
       );
 
       res.json({ message: "Successfully subscribed!" });
@@ -130,7 +193,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin login
   app.post("/api/admin/login", async (req, res) => {
     try {
-      console.log("[LOGIN] Received login request:", { username: req.body?.username });
+      console.log("[LOGIN] Received login request:", {
+        username: req.body?.username,
+      });
       const result = loginSchema.safeParse(req.body);
 
       if (!result.success) {
@@ -140,7 +205,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { username, password } = result.data;
-      console.log("[LOGIN] Credentials validated, checking with verifyAdminCredentials...");
+      console.log(
+        "[LOGIN] Credentials validated, checking with verifyAdminCredentials...",
+      );
       const isValid = await verifyAdminCredentials(username, password);
       console.log("[LOGIN] verifyAdminCredentials returned:", isValid);
 
@@ -180,11 +247,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { currentPassword, newPassword } = result.data;
-      
+
       // For now, hardcoded to 'admin' user. Could be extended to support multiple admins
       const username = "admin";
-      
-      const changeResult = await changeAdminPassword(username, currentPassword, newPassword);
+
+      const changeResult = await changeAdminPassword(
+        username,
+        currentPassword,
+        newPassword,
+      );
 
       if (!changeResult.success) {
         return res.status(400).json({ error: changeResult.error });
@@ -222,11 +293,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (adminError || !admin || !admin.email) {
         // Don't reveal if user exists for security
-        return res.json({ message: "If the username exists, a password reset email will be sent." });
+        return res.json({
+          message:
+            "If the username exists, a password reset email will be sent.",
+        });
       }
 
       // Generate secure random token
-      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetToken = crypto.randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
 
       // Hash the token before storing
@@ -256,7 +330,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Still return success to user for security
       }
 
-      res.json({ message: "If the username exists, a password reset email will be sent." });
+      res.json({
+        message: "If the username exists, a password reset email will be sent.",
+      });
     } catch (error) {
       console.error("Error in /api/admin/request-password-reset:", error);
       res.status(500).json({ error: "Internal server error" });
@@ -287,7 +363,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .gt("expires_at", new Date().toISOString());
 
       if (tokenError || !resetTokens || resetTokens.length === 0) {
-        return res.status(400).json({ error: "Invalid or expired reset token" });
+        return res
+          .status(400)
+          .json({ error: "Invalid or expired reset token" });
       }
 
       // Find the matching token by comparing hashes
@@ -303,7 +381,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       if (!matchedToken) {
-        return res.status(400).json({ error: "Invalid or expired reset token" });
+        return res
+          .status(400)
+          .json({ error: "Invalid or expired reset token" });
       }
 
       // Hash new password
@@ -373,7 +453,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const postData = result.data;
-      const publishedDate = postData.status === "published" ? new Date().toISOString() : null;
+      const publishedDate =
+        postData.status === "published" ? new Date().toISOString() : null;
 
       const { data, error } = await supabaseAdmin
         .from("blog_posts")
@@ -420,7 +501,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const postData = result.data;
-      const publishedDate = postData.status === "published" ? new Date().toISOString() : null;
+      const publishedDate =
+        postData.status === "published" ? new Date().toISOString() : null;
 
       const { data, error } = await supabaseAdmin
         .from("blog_posts")
@@ -510,8 +592,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const emailAvailable = await isEmailServiceAvailable();
       if (!emailAvailable) {
-        return res.status(503).json({ 
-          error: "Email service not configured. Please set up the Resend connection." 
+        return res.status(503).json({
+          error:
+            "Email service not configured. Please set up the Resend connection.",
         });
       }
 
@@ -542,8 +625,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "No active subscribers found" });
       }
 
-      const emails = subscribers.map(s => s.email);
-      
+      const emails = subscribers.map((s) => s.email);
+
       // Handle bounces by marking subscribers as bounced
       const handleBounce = async (email: string, error: string) => {
         if (!supabaseAdmin) return;
@@ -557,14 +640,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error(`Failed to mark ${email} as bounced:`, err);
         }
       };
-      
+
       const sendResult = await sendNewsletter(
         emails,
         {
           subject: result.data.subject,
           content: result.data.content,
         },
-        handleBounce
+        handleBounce,
       );
 
       res.json({
@@ -573,8 +656,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error in /api/admin/newsletter/send:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Internal server error" 
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Internal server error",
       });
     }
   });
@@ -619,7 +702,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { data, error } = await supabaseAdmin
         .from("contact_leads")
         .select("*")
-        .order("submitted_at", { ascending: false});
+        .order("submitted_at", { ascending: false });
 
       if (error) {
         console.error("Error fetching leads:", error);
@@ -719,7 +802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!isSupabaseAvailable || !supabase) {
         return res.status(503).json({ error: "Database service unavailable" });
       }
-      
+
       const result = insertContactLeadSchema.safeParse(req.body);
 
       if (!result.success) {
@@ -729,18 +812,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const leadData = result.data;
 
-      const { error } = await supabase
-        .from("contact_leads")
-        .insert([
-          {
-            name: leadData.name,
-            email: leadData.email,
-            company: leadData.company || null,
-            phone: leadData.phone || null,
-            message: leadData.message,
-            service_interest: leadData.serviceInterest || null,
-          },
-        ]);
+      const { error } = await supabase.from("contact_leads").insert([
+        {
+          name: leadData.name,
+          email: leadData.email,
+          company: leadData.company || null,
+          phone: leadData.phone || null,
+          message: leadData.message,
+          service_interest: leadData.serviceInterest || null,
+        },
+      ]);
 
       if (error) {
         console.error("Error inserting contact lead:", error);
