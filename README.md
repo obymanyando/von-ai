@@ -98,7 +98,7 @@ A modern, conversion-optimized marketing website and lead generation platform fo
    SESSION_SECRET=your_random_session_secret
 
    # Admin Credentials (Fallback)
-   ADMIN_USERNAME=admin
+   ADMIN_USERNAME=your_admin_username
    ADMIN_PASSWORD_HASH=your_bcrypt_hash
 
    # Production
@@ -132,8 +132,8 @@ The application uses the following tables:
 ## 🔐 Admin Access
 
 **Default Credentials:**
-- Username: `admin`
-- Password: `admin123`
+- Username: your_admin_username
+- Password: your_bcrypt_hash
 
 **Admin Panel Routes:**
 - Login: `/admin/login`
