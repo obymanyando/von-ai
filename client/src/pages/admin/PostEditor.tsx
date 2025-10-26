@@ -35,7 +35,6 @@ export default function PostEditor() {
   const [, params] = useRoute("/admin/posts/edit/:id");
   const postId = params?.id;
   const { toast } = useToast();
-  const [content, setContent] = useState("");
 
   const { data: existingPost } = useQuery<BlogPost>({
     queryKey: ["/api/admin/posts", postId],
@@ -66,7 +65,6 @@ export default function PostEditor() {
         featuredImageUrl: existingPost.featuredImageUrl || "",
         status: existingPost.status as "draft" | "published",
       });
-      setContent(existingPost.content);
     }
   }, [existingPost, form]);
 
@@ -95,7 +93,7 @@ export default function PostEditor() {
   });
 
   const onSubmit = (data: InsertBlogPost) => {
-    saveMutation.mutate({ ...data, content });
+    saveMutation.mutate(data);
   };
 
   // Auto-generate slug from title
@@ -204,18 +202,27 @@ export default function PostEditor() {
                   )}
                 />
 
-                <div>
-                  <FormLabel>Content *</FormLabel>
-                  <div className="mt-2 rounded-md border border-input bg-background">
-                    <ReactQuill
-                      theme="snow"
-                      value={content}
-                      onChange={setContent}
-                      modules={modules}
-                      className="min-h-[300px]"
-                    />
-                  </div>
-                </div>
+                <FormField
+                  control={form.control}
+                  name="content"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Content *</FormLabel>
+                      <FormControl>
+                        <div className="rounded-md border border-input bg-background">
+                          <ReactQuill
+                            theme="snow"
+                            value={field.value}
+                            onChange={field.onChange}
+                            modules={modules}
+                            className="min-h-[300px]"
+                          />
+                        </div>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <div className="grid gap-6 sm:grid-cols-2">
                   <FormField
