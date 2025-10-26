@@ -15,23 +15,36 @@ const app = express();
 app.set('trust proxy', 1);
 
 // Session configuration with PostgreSQL store
-const PgSession = connectPgSimple(session);
-const sessionStore = new PgSession({
-  pool: new Pool({ connectionString: process.env.DATABASE_URL }),
-  tableName: 'session',
-  createTableIfMissing: true,
-});
+let sessionStore;
+if (process.env.DATABASE_URL) {
+  try {
+    const PgSession = connectPgSimple(session);
+    sessionStore = new PgSession({
+      pool: new Pool({ connectionString: process.env.DATABASE_URL }),
+      tableName: 'session',
+      createTableIfMissing: true,
+      errorLog: (err) => console.error('Session store error:', err),
+    });
+    console.log('✅ PostgreSQL session store initialized');
+  } catch (error) {
+    console.error('❌ Failed to initialize PostgreSQL session store:', error);
+    console.warn('⚠️  Falling back to memory store (sessions will not persist)');
+  }
+} else {
+  console.warn('⚠️  DATABASE_URL not set - using memory store (sessions will not persist in production)');
+}
 
 app.use(session({
   store: sessionStore,
   secret: process.env.SESSION_SECRET || 'dev-secret-change-in-production',
   resave: false,
   saveUninitialized: false,
+  proxy: true, // Trust the reverse proxy
   cookie: {
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    sameSite: 'lax'
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // Allow cross-site cookies in production
   }
 }));
 
