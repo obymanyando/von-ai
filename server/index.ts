@@ -1,11 +1,18 @@
 import express, { type Request, Response, NextFunction } from "express";
 import session from "express-session";
 import connectPgSimple from "connect-pg-simple";
-import { Pool } from "@neondatabase/serverless";
+import { Pool, neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
+// Configure WebSocket for Neon serverless in development
+neonConfig.webSocketConstructor = ws;
+
 const app = express();
+
+// Trust proxy - required for secure cookies behind reverse proxy (like Replit deployment)
+app.set('trust proxy', 1);
 
 // Session configuration with PostgreSQL store
 const PgSession = connectPgSimple(session);
