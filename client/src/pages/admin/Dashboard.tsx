@@ -36,16 +36,26 @@ export default function AdminDashboard() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  const { data: posts } = useQuery<BlogPost[]>({
+  const { data: posts, isLoading: postsLoading } = useQuery<BlogPost[]>({
     queryKey: ["/api/admin/posts"],
+    staleTime: 0, // Always refetch
   });
 
-  const { data: subscribers } = useQuery<NewsletterSubscriber[]>({
+  const { data: subscribers, isLoading: subscribersLoading } = useQuery<NewsletterSubscriber[]>({
     queryKey: ["/api/admin/subscribers"],
+    staleTime: 0, // Always refetch
   });
 
-  const { data: leads } = useQuery<ContactLead[]>({
+  const { data: leads, isLoading: leadsLoading } = useQuery<ContactLead[]>({
     queryKey: ["/api/admin/leads"],
+    staleTime: 0, // Always refetch
+  });
+
+  // Debug logging
+  console.log("[DASHBOARD] Data state:", {
+    posts: { count: posts?.length, data: posts },
+    subscribers: { count: subscribers?.length, data: subscribers },
+    leads: { count: leads?.length, data: leads }
   });
 
   const logoutMutation = useMutation({
