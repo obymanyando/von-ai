@@ -87,8 +87,19 @@ export async function changeAdminPassword(username: string, currentPassword: str
 }
 
 export function requireAuth(req: any, res: any, next: any) {
+  console.log("[AUTH] requireAuth middleware - session:", {
+    sessionId: req.sessionID,
+    hasSession: !!req.session,
+    isAdmin: req.session?.isAdmin,
+    cookie: req.session?.cookie,
+    allSessionData: req.session
+  });
+  
   if (!req.session?.isAdmin) {
+    console.log("[AUTH] Unauthorized - session.isAdmin is falsy");
     return res.status(401).json({ error: "Unauthorized" });
   }
+  
+  console.log("[AUTH] Authorized - proceeding to route handler");
   next();
 }
