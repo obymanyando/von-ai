@@ -197,6 +197,51 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
   }
 }
 
+export async function sendContactAcknowledgementEmail(name: string, email: string): Promise<void> {
+  try {
+    const { client, fromEmail } = await getUncachableResendClient();
+
+    await client.emails.send({
+      from: `von AI <${fromEmail}>`,
+      to: email,
+      subject: "Thank You for Contacting von AI",
+      html: `
+        <div style="font-family: system-ui, -apple-system, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <h1 style="color: #000; margin-bottom: 20px;">Thank You, ${name}!</h1>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 15px;">
+            We've received your message and appreciate you reaching out to von AI.
+          </p>
+          <p style="color: #666; line-height: 1.6; margin-bottom: 15px;">
+            Our team will review your inquiry and get back to you within 24-48 hours. 
+            We're excited to discuss how AI automation can transform your business.
+          </p>
+          <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 30px 0;">
+            <p style="color: #333; font-weight: 600; margin-bottom: 10px;">In the meantime:</p>
+            <ul style="color: #666; line-height: 1.8; margin: 0; padding-left: 20px;">
+              <li>Explore our <a href="https://von-ai.com/blog" style="color: #f97316; text-decoration: none;">blog</a> for AI insights</li>
+              <li>Check out our <a href="https://von-ai.com/solutions" style="color: #f97316; text-decoration: none;">solutions</a> page</li>
+              <li>Learn about our <a href="https://von-ai.com/case-studies" style="color: #f97316; text-decoration: none;">case studies</a></li>
+            </ul>
+          </div>
+          <p style="color: #666; line-height: 1.6;">
+            If you have an urgent matter, feel free to reply to this email directly.
+          </p>
+          <p style="color: #666; line-height: 1.6; margin-top: 30px;">
+            Best regards,<br>
+            <strong>The von AI Team</strong>
+          </p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
+          <p style="color: #999; font-size: 12px; text-align: center;">
+            von AI - Transforming Business Through AI Automation
+          </p>
+        </div>
+      `,
+    });
+  } catch (error) {
+    console.warn("Failed to send contact acknowledgement email:", error);
+  }
+}
+
 function generateNewsletterHTML(content: string, subscriberEmail: string): string {
   const unsubscribeUrl = `${process.env.REPLIT_DEV_DOMAIN || "https://von-ai.com"}/unsubscribe?email=${encodeURIComponent(subscriberEmail)}`;
   

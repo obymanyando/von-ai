@@ -26,6 +26,7 @@ import {
   sendWelcomeEmail,
   isEmailServiceAvailable,
   sendPasswordResetEmail,
+  sendContactAcknowledgementEmail,
 } from "./email";
 import { z } from "zod";
 import crypto from "crypto";
@@ -840,6 +841,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.error("Error inserting contact lead:", error);
         return res.status(500).json({ error: "Failed to submit contact form" });
       }
+
+      // Send acknowledgement email (async, don't wait)
+      sendContactAcknowledgementEmail(leadData.name, leadData.email).catch((err) =>
+        console.error("Failed to send contact acknowledgement email:", err),
+      );
 
       res.json({ message: "Message sent successfully!" });
     } catch (error) {
