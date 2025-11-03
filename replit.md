@@ -113,6 +113,9 @@ Preferred communication style: Simple, everyday language.
 - **Supabase**: PostgreSQL database with Row Level Security (RLS)
 - **Neon Database**: PostgreSQL serverless driver (@neondatabase/serverless) as database connection layer
 - **Resend**: Transactional email service via Replit Connections (replaces manual API key management)
+  - Custom subdomain: `comms.von-ai.com` (DNS verified)
+  - From email address: `hello@comms.von-ai.com`
+  - Automatically sends: welcome emails (newsletter), contact acknowledgements, password reset emails
 - Environment variables required: 
   - `SUPABASE_URL`: Supabase project URL
   - `SUPABASE_ANON_KEY`: Public anon key (respects RLS)

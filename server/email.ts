@@ -40,7 +40,7 @@ async function getUncachableResendClient() {
   const credentials = await getCredentials();
   return {
     client: new Resend(credentials.apiKey),
-    fromEmail: credentials.fromEmail || "hello@vonai.com"
+    fromEmail: credentials.fromEmail || "hello@comms.von-ai.com"
   };
 }
 
