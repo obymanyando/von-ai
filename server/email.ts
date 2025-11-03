@@ -127,9 +127,11 @@ export async function sendNewsletter(
 
 export async function sendWelcomeEmail(email: string): Promise<void> {
   try {
+    console.log(`[EMAIL] Attempting to send welcome email to ${email}`);
     const { client, fromEmail } = await getUncachableResendClient();
+    console.log(`[EMAIL] Using from address: ${fromEmail}`);
     
-    await client.emails.send({
+    const result = await client.emails.send({
       from: `von AI <${fromEmail}>`,
       to: email,
       subject: "Welcome to von AI Newsletter",
@@ -150,8 +152,9 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
         </div>
       `,
     });
+    console.log(`[EMAIL] ✅ Welcome email sent successfully! ID: ${result.data?.id}`);
   } catch (error) {
-    console.warn("Email service not available, skipping welcome email:", error);
+    console.error("[EMAIL] ❌ Failed to send welcome email:", error);
   }
 }
 
@@ -199,9 +202,11 @@ export async function sendPasswordResetEmail(email: string, resetToken: string):
 
 export async function sendContactAcknowledgementEmail(name: string, email: string): Promise<void> {
   try {
+    console.log(`[EMAIL] Attempting to send contact acknowledgement to ${email}`);
     const { client, fromEmail } = await getUncachableResendClient();
+    console.log(`[EMAIL] Using from address: ${fromEmail}`);
 
-    await client.emails.send({
+    const result = await client.emails.send({
       from: `von AI <${fromEmail}>`,
       to: email,
       subject: "Thank You for Contacting von AI",
@@ -237,8 +242,9 @@ export async function sendContactAcknowledgementEmail(name: string, email: strin
         </div>
       `,
     });
+    console.log(`[EMAIL] ✅ Contact acknowledgement sent successfully! ID: ${result.data?.id}`);
   } catch (error) {
-    console.warn("Failed to send contact acknowledgement email:", error);
+    console.error("[EMAIL] ❌ Failed to send contact acknowledgement email:", error);
   }
 }
 
