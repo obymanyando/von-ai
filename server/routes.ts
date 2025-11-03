@@ -153,9 +153,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       if (existing) {
         if (existing.status === "active") {
-          return res.status(400).json({ error: "Email already subscribed" });
+          // Already subscribed and active - just return success without error
+          console.log(`[NEWSLETTER] Email ${email} already subscribed - returning success`);
+          return res.json({ message: "You're already subscribed to our newsletter!" });
         }
-        // Reactivate subscription
+        // Reactivate subscription if inactive
         const { error: updateError } = await supabase
           .from("newsletter_subscribers")
           .update({ status: "active", subscribed_at: new Date().toISOString() })
@@ -165,6 +167,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           console.error("Error reactivating subscription:", updateError);
           return res.status(500).json({ error: "Failed to subscribe" });
         }
+
+        // Send welcome email for reactivated subscription
+        sendWelcomeEmail(email).catch((err) =>
+          console.error("Failed to send welcome email:", err),
+        );
 
         return res.json({ message: "Successfully resubscribed!" });
       }
