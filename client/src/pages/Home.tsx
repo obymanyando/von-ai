@@ -110,38 +110,40 @@ export default function Home() {
 
             <div className="grid gap-8 md:grid-cols-3">
               {latestPosts.map((post) => (
-                <Link key={post.id} href={`/blog/${post.slug}`}>
-                  <a data-testid={`link-blog-post-${post.slug}`} className="group">
-                    <Card className="h-full hover-elevate transition-all duration-300">
-                      {post.featuredImageUrl && (
-                        <img
-                          src={post.featuredImageUrl}
-                          alt={post.title}
-                          className="h-48 w-full object-cover rounded-t-lg"
-                        />
-                      )}
-                      <CardContent className="p-6">
-                        <p className="mb-2 text-xs text-muted-foreground">
-                          {post.publishedDate
-                            ? new Date(post.publishedDate).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })
-                            : ""}
-                        </p>
-                        <h3 className="mb-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
-                          {post.title}
-                        </h3>
-                        {post.excerpt && (
-                          <p className="text-muted-foreground line-clamp-3">
-                            {post.excerpt}
-                          </p>
+                <div key={post.id} className="group transition-all duration-300 hover:-translate-y-1">
+                  <Link href={`/blog/${post.slug}`}>
+                    <a data-testid={`link-blog-post-${post.slug}`} className="block">
+                      <Card className="h-full hover:shadow-lg">
+                        {post.featuredImageUrl && (
+                          <img
+                            src={post.featuredImageUrl}
+                            alt={post.title}
+                            className="h-48 w-full object-cover rounded-t-lg"
+                          />
                         )}
-                      </CardContent>
-                    </Card>
-                  </a>
-                </Link>
+                        <CardContent className="p-6">
+                          <p className="mb-2 text-xs text-muted-foreground">
+                            {post.publishedDate
+                              ? new Date(post.publishedDate).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })
+                              : ""}
+                          </p>
+                          <h3 className="mb-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
+                            {post.title}
+                          </h3>
+                          {post.excerpt && (
+                            <p className="text-muted-foreground line-clamp-3">
+                              {post.excerpt}
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </a>
+                  </Link>
+                </div>
               ))}
             </div>
           </div>
