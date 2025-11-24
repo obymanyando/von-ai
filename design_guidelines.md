@@ -67,7 +67,7 @@ Core spacing set: **2, 4, 6, 8, 12, 16, 20, 24, 32**
 ### Navigation
 **Header:** Sticky, minimal height (64-72px), glassmorphism effect on scroll
 - Logo left, navigation center/right
-- Primary CTA button (orange accent from logo)
+- Primary CTA button (teal/cyan accent - hsl(197, 38%, 44%))
 - Mobile: Slide-out menu with blur backdrop
 
 ### Hero Section
