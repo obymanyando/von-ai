@@ -5,8 +5,8 @@ import { Link } from "wouter";
 export default function Hero() {
   return (
     <section className="relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-background" />
+      {/* Clear Sky gradient background - purple to blue */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#363795]/20 via-[#005C97]/15 to-background" />
       
       {/* Grid pattern overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:4rem_4rem]" />
@@ -22,7 +22,7 @@ export default function Hero() {
           {/* Headline */}
           <h1 className="mb-6 text-5xl font-bold tracking-tight text-foreground sm:text-6xl lg:text-7xl">
             Automate Your Business with{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#363795] to-[#005C97] bg-clip-text text-transparent">
               AI Agents
             </span>
           </h1>
