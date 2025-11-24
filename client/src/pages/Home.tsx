@@ -111,7 +111,7 @@ export default function Home() {
             <div className="grid gap-8 md:grid-cols-3">
               {latestPosts.map((post) => (
                 <Link key={post.id} href={`/blog/${post.slug}`}>
-                  <a data-testid={`link-blog-post-${post.slug}`}>
+                  <a data-testid={`link-blog-post-${post.slug}`} className="group">
                     <Card className="h-full hover-elevate transition-all duration-300">
                       {post.featuredImageUrl && (
                         <img
@@ -130,7 +130,7 @@ export default function Home() {
                               })
                             : ""}
                         </p>
-                        <h3 className="mb-2 text-xl font-semibold text-foreground line-clamp-2">
+                        <h3 className="mb-2 text-xl font-semibold text-foreground group-hover:text-primary transition-colors duration-200 line-clamp-2">
                           {post.title}
                         </h3>
                         {post.excerpt && (
