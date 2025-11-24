@@ -67,7 +67,7 @@ Core spacing set: **2, 4, 6, 8, 12, 16, 20, 24, 32**
 ### Navigation
 **Header:** Sticky, minimal height (64-72px), glassmorphism effect on scroll
 - Logo left, navigation center/right
-- Primary CTA button (teal/cyan accent - hsl(197, 38%, 44%))
+- Primary CTA button (Clear Sky gradient blue - hsl(203, 100%, 30%))
 - Mobile: Slide-out menu with blur backdrop
 
 ### Hero Section
@@ -200,10 +200,46 @@ All images should maintain consistent treatment: professional, high-quality, wit
 
 ---
 
+## Color Palette
+
+**"Clear Sky" Gradient Theme:**
+The website uses a sophisticated purple-to-blue gradient inspired by the "Clear Sky" gradient from uiGradients, creating a modern, tech-forward aesthetic.
+
+**Primary Colors:**
+- **Primary Blue:** `hsl(203, 100%, 30%)` - `#005C97` (Light mode)
+- **Primary Blue (Dark):** `hsl(203, 100%, 45%)` (Dark mode - lightened for visibility)
+- **Accent Purple:** `hsl(239, 47%, 40%)` - `#363795` (Used in gradients and chart accents)
+
+**Where the Gradient Appears:**
+- Hero background: Subtle purple-to-blue gradient wash (left to right)
+- "AI Agents" headline text: Full purple-to-blue gradient
+- Chart colors: Purple as secondary chart color
+- Hover states and focus rings: Primary blue
+
+**Application Guidelines:**
+- Buttons/CTAs: Solid primary blue for consistency and accessibility
+- Text gradients: Purple-to-blue for prominent headlines
+- Backgrounds: Subtle gradient overlays (20% opacity purple → 15% opacity blue)
+- Focus states: Primary blue ring for form inputs and interactive elements
+
+**Light Mode Colors:**
+- Background: `hsl(0, 0%, 100%)` - Pure white
+- Foreground: `hsl(240, 5%, 10%)` - Near black
+- Muted: `hsl(240, 6%, 94%)` - Soft gray backgrounds
+- Border: `hsl(240, 4%, 88%)` - Subtle borders
+
+**Dark Mode Colors:**
+- Background: `hsl(240, 6%, 8%)` - Deep dark
+- Foreground: `hsl(0, 0%, 98%)` - Near white
+- Muted: `hsl(240, 6%, 15%)` - Dark gray backgrounds
+- Border: `hsl(240, 5%, 18%)` - Subtle borders
+
+---
+
 ## Accessibility
 
 - Maintain 4.5:1 contrast ratios minimum
-- Focus states clearly visible on all interactive elements
+- Focus states clearly visible on all interactive elements (primary blue ring)
 - Semantic HTML throughout
 - ARIA labels on icon-only buttons
 - Keyboard navigation fully functional
@@ -211,4 +247,4 @@ All images should maintain consistent treatment: professional, high-quality, wit
 
 ---
 
-This design creates a premium, trustworthy AI automation agency presence that converts visitors through strategic content hierarchy, compelling CTAs, and a modern aesthetic that demonstrates technological expertise.
+This design creates a premium, trustworthy AI automation agency presence that converts visitors through strategic content hierarchy, compelling CTAs, and a modern aesthetic that demonstrates technological expertise. The Clear Sky gradient (purple to blue) reinforces the AI/tech positioning while maintaining professional credibility.
